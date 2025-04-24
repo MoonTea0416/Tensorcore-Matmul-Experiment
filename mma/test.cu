@@ -16,9 +16,9 @@ using namespace nvcuda::wmma;
 #define WARP_SIZE 32
 
 // MMA matrix tile dimensions.
-#define M 256
-#define N 256
-#define K 256
+#define M 16
+#define N 16
+#define K 8
 
 // GEMM configuration.
 #define M_TILES 16
@@ -52,8 +52,8 @@ __global__ void WMMAF16TensorCore(const float *A, const float *B, float *C)
 
         if (a_row < M_TOTAL && a_col < K_TOTAL && b_row < K_TOTAL && b_col < N_TOTAL) {
             // Load the inputs
-            wmma::load_matrix_sync(a_frag, A + a_col + a_row * M_TOTAL, M_TOTAL);
-            wmma::load_matrix_sync(b_frag, B + b_row + b_col * K_TOTAL, K_TOTAL);            
+            wmma::load_matrix_sync(a_frag, A + a_col + a_row * K_TOTAL, K_TOTAL);
+            wmma::load_matrix_sync(b_frag, B + b_col + b_row * N_TOTAL, N_TOTAL);            
 
             // Perform the matrix multiplication
             wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);

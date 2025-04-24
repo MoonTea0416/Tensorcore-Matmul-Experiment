@@ -10,7 +10,7 @@ device = torch.device("cuda:0")
 TensorType = torch.Tensor | list[float]
 
 
-def ensure_tensor_on_device(tensor: TensorType, data_type: torch.dtype = torch.float32) -> torch.Tensor:
+def ensure_tensor_on_device(tensor: TensorType, data_type: torch.dtype = torch.float64) -> torch.Tensor:
     """
     Ensures input is a PyTorch tensor on the CUDA device with the specified data type.
 
@@ -32,7 +32,7 @@ def ensure_tensor_on_device(tensor: TensorType, data_type: torch.dtype = torch.f
 
 
 def generate_test_matrix(
-    size: int, condition_number: float | None = None, data_type: torch.dtype = torch.float32
+    size: int, condition_number: float | None = None, data_type: torch.dtype = torch.float64
 ) -> torch.Tensor:
     """
     Generate a random symmetric positive definite test matrix.
@@ -52,9 +52,6 @@ def generate_test_matrix(
     torch.Tensor
         Random symmetric positive definite matrix.
     """
-    # Force float32 for compatibility
-    data_type = torch.float32
-    
     random_matrix = torch.randn(size, size, dtype=data_type, device=device)
     orthogonal_matrix, upper_triangular = torch.linalg.qr(random_matrix)
 
@@ -64,10 +61,7 @@ def generate_test_matrix(
         eigenvalues = torch.linspace(1, condition_number, size, dtype=data_type, device=device)
 
     diagonal_matrix = torch.diag(eigenvalues)
-    
-    # Use regular PyTorch matrix multiplication
-    temp = orthogonal_matrix @ diagonal_matrix
-    matrix = temp @ orthogonal_matrix.T
-    matrix = 0.5 * (matrix + matrix.T)  # Ensure perfect symmetry
+    matrix = orthogonal_matrix @ diagonal_matrix @ orthogonal_matrix.T
+    matrix = 0.5 * (matrix + matrix.T)
 
     return matrix
